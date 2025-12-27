@@ -1,20 +1,22 @@
 /**
- * Zephyr Core
+ * @fileoverview Zephyr Core
  * 
  * Instance-based architecture for the Zephyr templating engine.
  * All state is contained within instances, making it thread-safe and testable.
+ * 
+ * @packageDocumentation
+ * @module zephyr-template/core
  */
 
 import { resolve, dirname } from "path";
 import { readFile } from "fs/promises";
-import { ComponentAST, TemplateChild, ElementNode, AttributeValue, StyleNode } from "./parser";
+import { ComponentAST, TemplateChild, ElementNode, AttributeValue } from "./parser";
 import { Tokenizer } from "./tokenizer";
 import { parseTokens } from "./parser";
 import {
     compileExpression,
     evaluateValue,
     runScript,
-    escapeHtml,
     clearCaches as clearCompilerCaches,
     extractVariables,
 } from "./compiler";
@@ -24,25 +26,86 @@ import { CircularImportError, MaxDepthError, ImportError } from "./errors";
 // Types & Interfaces
 // =============================================================================
 
+/**
+ * Configuration options for the Zephyr compiler.
+ * 
+ * All options are optional and have sensible defaults.
+ * 
+ * @example
+ * ```typescript
+ * const config: ZephyrConfig = {
+ *     maxRenderDepth: 50,  // Limit nesting depth
+ *     verbose: true,       // Enable logging
+ * };
+ * ```
+ */
 export interface ZephyrConfig {
-    /** Maximum component nesting depth (default: 100) */
+    /** 
+     * Maximum component nesting depth before throwing {@link MaxDepthError}.
+     * Helps prevent infinite recursion from self-referencing components.
+     * @default 100
+     */
     maxRenderDepth?: number;
-    /** Maximum loop context pool size (default: 20) */
+    /** 
+     * Maximum number of loop contexts to pool for reuse.
+     * Higher values use more memory but reduce GC pressure in loop-heavy templates.
+     * @default 20
+     */
     maxPoolSize?: number;
-    /** Enable verbose logging */
+    /** 
+     * Enable verbose logging to console.
+     * Logs component loading and compilation progress.
+     * @default false
+     */
     verbose?: boolean;
-    /** Enable debug logging */
+    /** 
+     * Enable debug logging to console.
+     * Logs detailed internal state for troubleshooting.
+     * @default false
+     */
     debug?: boolean;
 }
 
+/**
+ * A loaded and parsed component, extending the base AST with resolved imports.
+ * 
+ * This interface represents a fully processed component ready for rendering.
+ * Components are cached by absolute file path.
+ */
 export interface Component extends ComponentAST {
+    /** Map of import names to their resolved absolute file paths */
     resolvedImports: Map<string, string>;
+    /** Absolute path to this component's source file */
     filePath: string;
 }
 
+/**
+ * The result of rendering a Zephyr component.
+ * 
+ * Contains the compiled HTML, collected CSS styles, and optional
+ * reactive JavaScript code.
+ * 
+ * @example
+ * ```typescript
+ * const { html, css, js } = await zephyr.render("./app.gzs");
+ * 
+ * // Combine into a complete HTML document
+ * const fullHtml = `
+ *   <!DOCTYPE html>
+ *   <html>
+ *     <head><style>${css}</style></head>
+ *     <body>${html}</body>
+ *     ${js ? `<script>${js}</script>` : ''}
+ *   </html>
+ * `;
+ * ```
+ */
 export interface RenderResult {
+    /** The rendered HTML content */
     html: string;
+    /** Collected CSS from all rendered components (deduplicated) */
     css: string;
+    /** Reactive JavaScript code, or null if no reactivity is needed */
     js: string | null;
 }
 
@@ -108,10 +171,41 @@ class LoopContextPool {
     }
 }
 
-// =============================================================================
-// Zephyr Compiler Instance
-// =============================================================================
-
+/**
+ * The main Zephyr compiler class.
+ * 
+ * Each instance maintains its own caches for components, expressions,
+ * and styles. Create multiple instances for isolated compilation contexts,
+ * or reuse a single instance for better cache utilization.
+ * 
+ * @example Basic usage
+ * ```typescript
+ * const zephyr = new Zephyr();
+ * const { html, css, js } = await zephyr.render("./app/index.gzs");
+ * ```
+ * 
+ * @example With configuration
+ * ```typescript
+ * const zephyr = new Zephyr({
+ *     maxRenderDepth: 50,
+ *     verbose: true,
+ * });
+ * ```
+ * 
+ * @example Multiple renders with cache reuse
+ * ```typescript
+ * const zephyr = new Zephyr();
+ * 
+ * // First render populates cache
+ * const page1 = await zephyr.render("./pages/home.gzs");
+ * 
+ * // Subsequent renders benefit from cached components
+ * const page2 = await zephyr.render("./pages/about.gzs");
+ * 
+ * // Clear cache for fresh start
+ * zephyr.clearCache();
+ * ```
+ */
 export class Zephyr {
     private config: Required<ZephyrConfig>;
     private registry = new Map<string, Component>();
@@ -121,6 +215,11 @@ export class Zephyr {
     private loopPool: LoopContextPool;
     private resolvedPathCache = new Map<string, string>();
 
+    /**
+     * Creates a new Zephyr compiler instance.
+     * 
+     * @param config - Optional configuration options
+     */
     constructor(config: ZephyrConfig = {}) {
         this.config = {
             maxRenderDepth: config.maxRenderDepth ?? 100,
@@ -135,6 +234,28 @@ export class Zephyr {
     // Public API
     // =========================================================================
 
+    /**
+     * Render a component file to HTML.
+     * 
+     * This method loads the component and all its imports, executes any
+     * script blocks, renders the template, collects styles, and optionally
+     * generates reactive JavaScript.
+     * 
+     * @param entryPath - Path to the entry `.gzs` component file
+     * @returns A promise that resolves to the render result
+     * 
+     * @throws {ImportError} If the component file cannot be loaded
+     * @throws {TokenizerError} If there's a syntax error
+     * @throws {ParserError} If the component structure is invalid
+     * @throws {CircularImportError} If circular imports are detected
+     * @throws {MaxDepthError} If component nesting exceeds maxRenderDepth
+     * 
+     * @example
+     * ```typescript
+     * const result = await zephyr.render("./app/index.gzs");
+     * console.log(result.html);
+     * ```
+     */
     async render(entryPath: string): Promise<RenderResult> {
         this.collectedStyles.clear();
 
@@ -146,7 +267,7 @@ export class Zephyr {
 
         // Generate instance ID (consistent for HTML and JS)
         const instanceId = `zephyr-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        
+
         // Get initial context from script
         const initialContext: RenderContext = {};
         if (comp.script) {
@@ -158,7 +279,7 @@ export class Zephyr {
         const reactiveVars = this.analyzeReactiveVariables(comp, initialContext);
         const eventHandlers = this.analyzeEventHandlers(comp);
         const allInterpolations = this.analyzeInterpolations(comp);
-        
+
         // Filter interpolations to only include those that reference reactive variables
         const reactiveInterpolations = allInterpolations.filter(interp => {
             // Check if ANY dependency is a reactive variable
@@ -167,7 +288,7 @@ export class Zephyr {
 
         // Only set up reactivity if there's actual reactivity to handle
         const hasReactivity = reactiveVars.size > 0 || eventHandlers.length > 0 || reactiveInterpolations.length > 0;
-        
+
         if (hasReactivity) {
             // Store reactivity info for HTML rendering
             // Create a map of (tag, event) -> handler index for quick lookup
@@ -211,6 +332,23 @@ export class Zephyr {
         handlerMap: Map<string, number>;
     } | null = null;
 
+    /**
+     * Clear all internal caches.
+     * 
+     * Call this method to free memory or to force reloading of components
+     * that may have changed on disk. After clearing, the next render will
+     * reload all components from disk.
+     * 
+     * @example
+     * ```typescript
+     * // Render, then clear for fresh start
+     * await zephyr.render("./app.gzs");
+     * zephyr.clearCache();
+     * 
+     * // Next render will reload everything
+     * await zephyr.render("./app.gzs");
+     * ```
+     */
     clearCache(): void {
         this.registry.clear();
         this.loadingPromises.clear();
@@ -407,7 +545,7 @@ export class Zephyr {
                 )?.elementId;
                 const value = compileExpression(node.expression, context, node.raw);
                 // Wrap in span with data attribute for reactive binding
-                return interpId 
+                return interpId
                     ? `<span data-interp="${interpId}">${value}</span>`
                     : value;
             case "element":
@@ -485,9 +623,9 @@ export class Zephyr {
         // Check for event handlers first
         let handlerIdx: number | undefined;
         const filteredAttrs = new Map(node.attributes);
-        
+
         if (this.currentReactivity && node.attributes) {
-            for (const [attr, value] of node.attributes) {
+            for (const [attr] of node.attributes) {
                 if (attr.startsWith("on") && attr.length > 2) {
                     const event = attr.substring(2).toLowerCase();
                     const handlerKey = `${node.tag}:${event}`;
@@ -500,14 +638,14 @@ export class Zephyr {
                 }
             }
         }
-        
+
         let attrs = this.renderAttributes(filteredAttrs, node.props, context);
-        
+
         // Add instance ID to root element (first element in template) only if there's reactivity
         if (depth === 0 && comp.template[0] === node && this.currentReactivity) {
             attrs += ` data-zephyr-instance="${this.currentReactivity.instanceId}"`;
         }
-        
+
         // Add event handler data attribute
         if (handlerIdx !== undefined) {
             attrs += ` data-handler="${handlerIdx}"`;
@@ -587,9 +725,9 @@ export class Zephyr {
     /**
      * Analyze component for reactive variables (from script block)
      */
-    private analyzeReactiveVariables(comp: Component, context: RenderContext): Set<string> {
+    private analyzeReactiveVariables(comp: Component, _context: RenderContext): Set<string> {
         const vars = new Set<string>();
-        
+
         if (comp.script) {
             // Extract variable assignments from script: this.var = value
             const assignments = comp.script.code.match(/this\.([a-zA-Z_$][a-zA-Z0-9_$]*)\s*=/g);
@@ -602,7 +740,7 @@ export class Zephyr {
                 }
             }
         }
-        
+
         return vars;
     }
 
@@ -617,8 +755,8 @@ export class Zephyr {
             for (const node of nodes) {
                 if (node.type === "element") {
                     elementIdCounter++;
-                    const elementId = `el-${elementIdCounter}`;
-                    
+                    // Element counter for unique IDs
+
                     // Check all attributes for event handlers
                     for (const [attr, value] of node.attributes) {
                         if (attr.startsWith("on") && attr.length > 2) {
@@ -631,7 +769,7 @@ export class Zephyr {
                             });
                         }
                     }
-                    
+
                     // Check children
                     if (node.children.length > 0) {
                         traverse(node.children);
@@ -676,7 +814,7 @@ export class Zephyr {
      * Generate reactive JavaScript code
      */
     private generateReactiveJS(
-        comp: Component,
+        _comp: Component,
         reactiveVars: Set<string>,
         eventHandlers: Array<{ event: string; code: string; elementId: string; tag: string }>,
         interpolations: Array<{ expression: string; elementId: string; dependencies: Set<string> }>,
@@ -684,7 +822,7 @@ export class Zephyr {
         instanceId: string
     ): string {
         const varArray = Array.from(reactiveVars);
-        
+
         // Generate initial values
         const initialValues: Record<string, any> = {};
         for (const varName of varArray) {
@@ -694,8 +832,8 @@ export class Zephyr {
         // Generate reactive state object
         const reactiveState = varArray.map(v => {
             const val = initialValues[v];
-            const valueStr = typeof val === 'function' 
-                ? val.toString() 
+            const valueStr = typeof val === 'function'
+                ? val.toString()
                 : JSON.stringify(val ?? null);
             return `    ${v}: { 
       value: ${typeof val === 'function' ? val : valueStr}, 
@@ -715,7 +853,7 @@ export class Zephyr {
             }
             return false;
         });
-        
+
         const complexExpressions = interpolations.filter(interp => {
             const deps = Array.from(interp.dependencies);
             // Complex if: multiple dependencies OR expression is not just the variable name
@@ -730,11 +868,10 @@ export class Zephyr {
         const expressionBindingsCode = complexExpressions.map(interp => {
             const deps = Array.from(interp.dependencies).filter(d => reactiveVars.has(d));
             if (deps.length === 0) return '';
-            
+
             const depParams = deps.join(', ');
-            const depValues = deps.map(d => `reactive.${d}.value`).join(', ');
-            const safeId = interp.elementId.replace(/-/g, '_');
-            
+            // Build expression binding object
+
             return `  {
     id: '${interp.elementId}',
     expr: '${interp.expression.replace(/'/g, "\\'")}',
@@ -802,7 +939,7 @@ export class Zephyr {
                     new RegExp(`\\b${varName}\\s*--`, 'g'),
                     `update('${varName}', reactive.${varName}.value - 1)`
                 );
-                
+
                 // Handle compound assignments (must be BEFORE simple assignment)
                 // Replace var += expr with update('var', var + expr)
                 transformedCode = transformedCode.replace(
@@ -837,7 +974,7 @@ export class Zephyr {
                         return `update('${varName}', reactive.${varName}.value / ${expr.trim()})`;
                     }
                 );
-                
+
                 // Replace var = value with update('var', value)
                 transformedCode = transformedCode.replace(
                     new RegExp(`\\b${varName}\\s*=\\s*([^;]+)`, 'g'),
@@ -848,7 +985,7 @@ export class Zephyr {
                     }
                 );
             }
-            
+
             return `  handlers.set('${idx}', function() {
     ${transformedCode};
   });`;
@@ -861,11 +998,11 @@ export class Zephyr {
     
     // Find simple interpolation nodes and bind them to variables
     ${simpleInterpolations.map(interp => {
-        const deps = Array.from(interp.dependencies);
-        if (deps.length === 1 && reactiveVars.has(deps[0])) {
-            const varName = deps[0];
-            const safeId = interp.elementId.replace(/-/g, '_');
-            return `    const ${safeId} = container.querySelector('[data-interp="${interp.elementId}"]');
+            const deps = Array.from(interp.dependencies);
+            if (deps.length === 1 && reactiveVars.has(deps[0])) {
+                const varName = deps[0];
+                const safeId = interp.elementId.replace(/-/g, '_');
+                return `    const ${safeId} = container.querySelector('[data-interp="${interp.elementId}"]');
     if (${safeId}) {
       const textNode = ${safeId}.firstChild;
       if (textNode && textNode.nodeType === 3) {
@@ -874,19 +1011,19 @@ export class Zephyr {
         reactive.${varName}.nodes.push(${safeId});
       }
     }`;
-        }
-        return '';
-    }).filter(Boolean).join('\n')}
+            }
+            return '';
+        }).filter(Boolean).join('\n')}
     
     // Find complex expression nodes and bind them
     ${complexExpressions.map(interp => {
-        const deps = Array.from(interp.dependencies).filter(d => reactiveVars.has(d));
-        if (deps.length === 0) return '';
-        
-        const safeId = interp.elementId.replace(/-/g, '_');
-        const depValues = deps.map(d => `reactive.${d}.value`).join(', ');
-        
-        return `    const ${safeId} = container.querySelector('[data-interp="${interp.elementId}"]');
+            const deps = Array.from(interp.dependencies).filter(d => reactiveVars.has(d));
+            if (deps.length === 0) return '';
+
+            const safeId = interp.elementId.replace(/-/g, '_');
+            const depValues = deps.map(d => `reactive.${d}.value`).join(', ');
+
+            return `    const ${safeId} = container.querySelector('[data-interp="${interp.elementId}"]');
     if (${safeId}) {
       const binding = expressionBindings.find(b => b.id === '${interp.elementId}');
       if (binding) {
@@ -897,7 +1034,7 @@ export class Zephyr {
         binding.node.textContent = String(initialValue);
       }
     }`;
-    }).filter(Boolean).join('\n')}
+        }).filter(Boolean).join('\n')}
     
     // Set up event delegation for each event type
     ${eventHandlers.length > 0 ? Array.from(handlersByEvent.keys()).map(eventType => `

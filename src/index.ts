@@ -1,7 +1,31 @@
 /**
- * Zephyr
+ * @fileoverview Zephyr - A fast, lightweight component-based templating engine
  * 
- * A fast, lightweight component-based templating engine.
+ * Zephyr compiles `.gzs` component files to HTML with optional reactive JavaScript.
+ * It supports component imports, props, slots, loops, conditionals, and scoped styles.
+ * 
+ * @example Basic usage
+ * ```typescript
+ * import { render } from "zephyr-template";
+ * 
+ * const { html, css, js } = await render("./app/index.gzs");
+ * console.log(html);
+ * ```
+ * 
+ * @example With custom configuration
+ * ```typescript
+ * import { Zephyr } from "zephyr-template";
+ * 
+ * const zephyr = new Zephyr({
+ *     maxRenderDepth: 50,
+ *     verbose: true,
+ * });
+ * 
+ * const result = await zephyr.render("./app/index.gzs");
+ * ```
+ * 
+ * @packageDocumentation
+ * @module zephyr-template
  */
 
 import { Zephyr } from "./core";
@@ -17,13 +41,55 @@ export { Zephyr };
 export type { ZephyrConfig, RenderResult, Component };
 export * from "./errors";
 
+/**
+ * Options for the {@link render} function.
+ * Extends {@link ZephyrConfig} with additional output options.
+ * 
+ * @example
+ * ```typescript
+ * const options: RenderOptions = {
+ *     verbose: true,
+ *     maxRenderDepth: 50,
+ * };
+ * ```
+ */
 export interface RenderOptions extends ZephyrConfig {
-    /** Output file path (if not specified, returns result) */
+    /** 
+     * Output file path. If specified, the compiled HTML will be written to this file.
+     * If not specified, the result is returned without writing to disk.
+     */
     output?: string;
 }
 
 /**
- * Render a component file
+ * Render a Zephyr component file to HTML.
+ * 
+ * This is a convenience function that creates a new {@link Zephyr} instance,
+ * renders the component, and returns the result. For multiple renders,
+ * consider creating a single {@link Zephyr} instance and reusing it.
+ * 
+ * @param entryPath - Path to the entry `.gzs` component file
+ * @param options - Optional configuration options
+ * @returns A promise that resolves to the render result containing HTML, CSS, and optional JS
+ * 
+ * @example Basic render
+ * ```typescript
+ * const { html, css, js } = await render("./app/index.gzs");
+ * ```
+ * 
+ * @example With options
+ * ```typescript
+ * const result = await render("./app/index.gzs", {
+ *     verbose: true,
+ *     maxRenderDepth: 50,
+ * });
+ * ```
+ * 
+ * @throws {ImportError} If the component file cannot be loaded
+ * @throws {TokenizerError} If there's a syntax error in the component
+ * @throws {ParserError} If the component structure is invalid
+ * @throws {CircularImportError} If circular imports are detected
+ * @throws {MaxDepthError} If component nesting exceeds maxRenderDepth
  */
 export async function render(
     entryPath: string,
@@ -40,16 +106,35 @@ export async function render(
 }
 
 /**
- * Create a new Zephyr compiler instance with custom configuration
+ * Create a new Zephyr compiler instance with custom configuration.
+ * 
+ * Use this when you need to render multiple components and want to
+ * share caches between renders for better performance.
+ * 
+ * @param config - Optional configuration options
+ * @returns A new {@link Zephyr} compiler instance
+ * 
+ * @example
+ * ```typescript
+ * const compiler = createCompiler({ verbose: true });
+ * 
+ * // Render multiple components with shared cache
+ * const page1 = await compiler.render("./app/page1.gzs");
+ * const page2 = await compiler.render("./app/page2.gzs");
+ * 
+ * // Clear cache between unrelated renders
+ * compiler.clearCache();
+ * ```
  */
 export function createCompiler(config: ZephyrConfig = {}): Zephyr {
     return new Zephyr(config);
 }
 
 // =============================================================================
-// CLI Utilities
+// CLI Utilities (Internal)
 // =============================================================================
 
+/** @internal */
 async function writeOutput(filePath: string, content: string): Promise<void> {
     const absPath = resolve(filePath);
     const dir = dirname(absPath);
@@ -57,6 +142,7 @@ async function writeOutput(filePath: string, content: string): Promise<void> {
     await writeFile(absPath, content, "utf-8");
 }
 
+/** @internal */
 function combineOutput(html: string, css: string): string {
     if (!css.trim()) {
         return html;
@@ -69,6 +155,7 @@ function combineOutput(html: string, css: string): string {
     return `<style>\n${css}</style>\n${html}`;
 }
 
+/** @internal */
 interface CLIArgs {
     entry: string;
     output: string | null;
@@ -77,6 +164,7 @@ interface CLIArgs {
     help: boolean;
 }
 
+/** @internal */
 function parseArgs(args: string[]): CLIArgs {
     let entry = "./app/index.gzs";
     let output: string | null = null;
@@ -103,6 +191,7 @@ function parseArgs(args: string[]): CLIArgs {
     return { entry, output, verbose, debug, help };
 }
 
+/** @internal */
 function printHelp(): void {
     console.log(`
 Zephyr Compiler

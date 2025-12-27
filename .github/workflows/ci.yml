@@ -1,0 +1,113 @@
+name: CI
+
+on:
+  push:
+    branches: [main, development]
+  pull_request:
+    branches: [main, development]
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run tests
+        run: bun test
+
+      - name: Run tests with coverage
+        run: bun test --coverage
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build JavaScript bundles
+        run: bun run build
+
+      - name: Build TypeScript declarations
+        run: bun run build:types
+
+      - name: Verify dist files exist
+        run: |
+          test -f dist/index.js
+          test -f dist/core.js
+          test -f dist/errors.js
+          test -f dist/cli.js
+          test -f dist/index.d.ts
+          test -f dist/core.d.ts
+          test -f dist/errors.d.ts
+          echo "✓ All dist files verified"
+
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run TypeScript type check
+        run: bunx tsc --noEmit
+
+  lint:
+    name: Lint (Optional)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Check if ESLint is configured
+        id: eslint-check
+        run: |
+          if [ -f "eslint.config.js" ] || [ -f ".eslintrc.json" ] || [ -f ".eslintrc.js" ]; then
+            echo "eslint_configured=true" >> $GITHUB_OUTPUT
+          else
+            echo "eslint_configured=false" >> $GITHUB_OUTPUT
+            echo "ESLint not configured, skipping..."
+          fi
+
+      - name: Run ESLint
+        if: steps.eslint-check.outputs.eslint_configured == 'true'
+        run: bun run lint

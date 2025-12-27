@@ -62,22 +62,22 @@ const JS_RESERVED = new Set([
 
 export function extractVariables(expression: string): string[] {
     const variables = new Set<string>();
-    
+
     // Remove string literals to avoid extracting identifiers from them
     const stripped = expression.replace(STRING_LITERAL_REGEX, '""');
-    
+
     let match: RegExpExecArray | null;
-    
+
     // Reset regex state
     IDENTIFIER_REGEX.lastIndex = 0;
-    
+
     while ((match = IDENTIFIER_REGEX.exec(stripped)) !== null) {
         const identifier = match[1];
         if (!JS_RESERVED.has(identifier)) {
             variables.add(identifier);
         }
     }
-    
+
     return Array.from(variables).sort();
 }
 
@@ -97,16 +97,7 @@ const scriptCache = new Map<string, CompiledExpression>();
 // Context Utilities
 // =============================================================================
 
-/**
- * Get all enumerable properties including inherited ones (from prototype chain)
- */
-function getAllKeys(obj: object): Set<string> {
-    const keys = new Set<string>();
-    for (const key in obj) {
-        keys.add(key);
-    }
-    return keys;
-}
+// Context utilities for expression evaluation
 
 /**
  * Safely get a value from context, returning undefined for missing keys
@@ -124,10 +115,10 @@ function getContextValue(context: any, key: string): any {
 
 export function compileExpression(expression: string, context: object, raw = false): string {
     let compiled = expressionCache.get(expression);
-    
+
     if (!compiled) {
         const variables = extractVariables(expression);
-        
+
         try {
             // Create function with extracted variables as parameters
             const fn = new Function(...variables, `return (${expression});`);
@@ -138,14 +129,14 @@ export function compileExpression(expression: string, context: object, raw = fal
             return `<!-- Expression error -->`;
         }
     }
-    
+
     try {
         // Get values for each variable from context
         const args = compiled.variables.map(v => getContextValue(context, v));
         const result = compiled.fn(...args);
-        
+
         if (result === undefined || result === null) return "";
-        
+
         const stringResult = String(result);
         return raw ? stringResult : escapeHtml(stringResult);
     } catch (e) {
@@ -168,10 +159,10 @@ export function compileExpressionRaw(expression: string, context: object): strin
 export function evaluateValue(expression: string, context: object): any {
     const cacheKey = `val::${expression}`;
     let compiled = expressionCache.get(cacheKey);
-    
+
     if (!compiled) {
         const variables = extractVariables(expression);
-        
+
         try {
             const fn = new Function(...variables, `return (${expression});`);
             compiled = { fn, variables };
@@ -180,7 +171,7 @@ export function evaluateValue(expression: string, context: object): any {
             return undefined;
         }
     }
-    
+
     try {
         const args = compiled.variables.map(v => getContextValue(context, v));
         return compiled.fn(...args);
@@ -200,10 +191,10 @@ export function evaluateValue(expression: string, context: object): any {
 export function runScript(code: string, context: object): object {
     const cacheKey = `script::${code}`;
     let compiled = scriptCache.get(cacheKey);
-    
+
     if (!compiled) {
         const variables = extractVariables(code);
-        
+
         try {
             // Create function with variables as parameters
             // `this` is bound to context for writes
@@ -215,7 +206,7 @@ export function runScript(code: string, context: object): object {
             return context;
         }
     }
-    
+
     try {
         const args = compiled.variables.map(v => getContextValue(context, v));
         return compiled.fn.call(context, ...args);
