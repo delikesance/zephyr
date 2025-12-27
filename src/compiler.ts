@@ -60,7 +60,7 @@ const JS_RESERVED = new Set([
     'console',
 ]);
 
-function extractVariables(expression: string): string[] {
+export function extractVariables(expression: string): string[] {
     const variables = new Set<string>();
     
     // Remove string literals to avoid extracting identifiers from them
