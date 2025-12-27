@@ -1,0 +1,89 @@
+<!-- Zephyr Showcase -->
+
+<import section from="./section.gzs" />
+<import card from="./card.gzs" />
+<import list from="./list.gzs" />
+<import button from="./button.gzs" />
+<import user-card from="./user-card.gzs" />
+
+<script>
+	this.title = "Zephyr";
+	this.features = ["Imports", "Props", "Loops", "Slots", "Conditionals", "Expressions"];
+	this.users = [
+		{ name: "Alice Johnson", role: "Admin" },
+		{ name: "Bob Smith", role: "Developer" },
+		{ name: "Carol White", role: "Designer" }
+	];
+	this.userCount = this.users.length;
+	this.isAdmin = true;
+	this.score = 75;
+</script>
+
+<template>
+	<main>
+		<h1>{{title}} Showcase</h1>
+		
+		<!-- Feature 1: Basic Props -->
+		<section :title="'1. Props'">
+			<p>Pass data to components with :prop="expression"</p>
+			<card :title="'Hello World'" :description="'This card receives props from parent'" />
+			<card :title="'Dynamic'" :description="'Title: ' + title" />
+		</section>
+		
+		<!-- Feature 2: Loops -->
+		<section :title="'2. Loops'">
+			<p>Iterate with each="item" in="array"</p>
+			<list :items="features" />
+		</section>
+		
+		<!-- Feature 3: Slots -->
+		<section :title="'3. Slots'">
+			<p>Pass inner content to components with slot</p>
+			<button>Default Button</button>
+			<button :variant="'secondary'">Secondary Style</button>
+			<button :variant="'danger'">
+				<strong>Warning!</strong> Delete
+			</button>
+		</section>
+		
+		<!-- Feature 4: Everything Combined -->
+		<section :title="'4. Combined'">
+			<p>Loop over data, pass props, and use slots</p>
+			<user-card each="user" in="users" :name="user.name" :role="user.role">
+				<p>Custom content for {{user.name}}</p>
+			</user-card>
+		</section>
+		
+		<!-- Feature 5: Conditionals -->
+		<section :title="'5. Conditionals'">
+			<p>Use if/else-if/else for conditional rendering</p>
+			
+			<div class="conditional-demo">
+				<p if="isAdmin" class="admin">✓ You are an admin</p>
+				<p else class="user">You are a regular user</p>
+			</div>
+			
+			<div class="grade-demo">
+				<span if="score >= 90" class="grade-a">Grade: A</span>
+				<span else-if="score >= 80" class="grade-b">Grade: B</span>
+				<span else-if="score >= 70" class="grade-c">Grade: C (Score: {{score}})</span>
+				<span else class="grade-f">Grade: F</span>
+			</div>
+			
+			<div class="count-demo">
+				<p if="userCount === 0">No users</p>
+				<p else-if="userCount === 1">One user</p>
+				<p else>{{userCount}} users</p>
+			</div>
+		</section>
+		
+		<!-- Feature 6: Expressions -->
+		<section :title="'6. Expressions'">
+			<p>Use JavaScript expressions anywhere</p>
+			<p>Features count: {{features.length}}</p>
+			<p>Uppercase: {{title.toUpperCase()}}</p>
+			<p>Math: 2 + 2 = {{2 + 2}}</p>
+			<p>Ternary: {{users.length > 2 ? 'Many users' : 'Few users'}}</p>
+		</section>
+	</main>
+</template>

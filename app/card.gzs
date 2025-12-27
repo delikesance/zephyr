@@ -1,0 +1,26 @@
+<!-- Card Component: Demonstrates PROPS -->
+
+<style>
+.card {
+	background: white;
+	border-radius: 8px;
+	padding: 1rem;
+	box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+	margin-bottom: 1rem;
+}
+.card h3 {
+	margin: 0 0 0.5rem 0;
+	color: #333;
+}
+.card p {
+	margin: 0;
+	color: #666;
+}
+</style>
+
+<template>
+	<div class="card">
+		<h3>{{title}}</h3>
+		<p>{{description}}</p>
+	</div>
+</template>

@@ -1,0 +1,9 @@
+<!-- List Component: Demonstrates LOOPS -->
+
+<template>
+	<ul class="list">
+		<li each="item, i" in="items">
+			{{i + 1}}. {{item}}
+		</li>
+	</ul>
+</template>
