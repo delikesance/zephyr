@@ -1,0 +1,62 @@
+<script>
+	let posts = $([])
+</script>
+
+<template>
+	<div class="blog-list">
+		<h1>Blog Posts</h1>
+		<ul class="post-list">
+			<li @each="post in posts">
+				<a href="/blog/{{ post.slug }}">
+					<h2>{{ post.title }}</h2>
+					<p class="date">{{ post.date }}</p>
+				</a>
+			</li>
+		</ul>
+	</div>
+</template>
+
+<style>
+	.blog-list {
+		max-width: 800px;
+		margin: 50px auto;
+		padding: 20px;
+		font-family: system-ui, sans-serif;
+	}
+
+	.post-list {
+		list-style: none;
+		padding: 0;
+	}
+
+	.post-list li {
+		margin-bottom: 20px;
+		padding: 20px;
+		background: white;
+		border-radius: 8px;
+		box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+		transition: transform 0.2s;
+	}
+
+	.post-list li:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+	}
+
+	.post-list a {
+		text-decoration: none;
+		color: inherit;
+		display: block;
+	}
+
+	.post-list h2 {
+		margin: 0 0 10px 0;
+		color: #333;
+	}
+
+	.post-list .date {
+		margin: 0;
+		color: #666;
+		font-size: 0.9rem;
+	}
+</style>

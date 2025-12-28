@@ -1,0 +1,108 @@
+<!-- 
+  Computed Properties Demo
+  Shows how $computed() auto-updates when dependencies change
+-->
+
+<script>
+  let firstName = $('John')
+  let lastName = $('Doe')
+  let birthYear = $(1990)
+  
+  // Computed property - automatically updates when firstName or lastName changes
+  const fullName = $computed(() => firstName + ' ' + lastName)
+  
+  // Computed with calculation
+  const age = $computed(() => new Date().getFullYear() - birthYear)
+  
+  // Computed with formatting
+  const greeting = $computed(() => `Hello, ${fullName}! You are ${age} years old.`)
+</script>
+
+<template>
+  <div class="computed-demo">
+    <h1>Computed Properties Demo</h1>
+    
+    <div class="form">
+      <label>
+        First Name:
+        <input type="text" value="{{ firstName }}" oninput="firstName = this.value" />
+      </label>
+      
+      <label>
+        Last Name:
+        <input type="text" value="{{ lastName }}" oninput="lastName = this.value" />
+      </label>
+      
+      <label>
+        Birth Year:
+        <input type="number" value="{{ birthYear }}" oninput="birthYear = parseInt(this.value)" />
+      </label>
+    </div>
+    
+    <div class="results">
+      <h2>Computed Values</h2>
+      <p><strong>Full Name:</strong> {{ fullName }}</p>
+      <p><strong>Age:</strong> {{ age }}</p>
+      <p><strong>Greeting:</strong> {{ greeting }}</p>
+    </div>
+  </div>
+</template>
+
+<style>
+  .computed-demo {
+    max-width: 500px;
+    margin: 50px auto;
+    padding: 30px;
+    font-family: system-ui, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    color: white;
+  }
+  
+  h1 {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+  
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 30px;
+  }
+  
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-weight: 500;
+  }
+  
+  input {
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+  }
+  
+  input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+  }
+  
+  .results {
+    background: rgba(255, 255, 255, 0.15);
+    padding: 20px;
+    border-radius: 12px;
+  }
+  
+  .results h2 {
+    margin-top: 0;
+    font-size: 1.2rem;
+  }
+  
+  .results p {
+    margin: 10px 0;
+  }
+</style>

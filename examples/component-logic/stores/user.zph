@@ -1,0 +1,33 @@
+<!-- 
+  User Store
+  Global state for user authentication and preferences
+-->
+
+<store>
+  let user = $({ 
+    name: '',
+    email: '',
+    loggedIn: false 
+  })
+  
+  let preferences = $({
+    theme: 'dark',
+    notifications: true
+  })
+  
+  function login(name, email) {
+    user = { name, email, loggedIn: true }
+  }
+  
+  function logout() {
+    user = { name: '', email: '', loggedIn: false }
+  }
+  
+  function setTheme(theme) {
+    preferences = { ...preferences, theme }
+  }
+  
+  function toggleNotifications() {
+    preferences = { ...preferences, notifications: !preferences.notifications }
+  }
+</store>

@@ -1,0 +1,185 @@
+<!-- 
+  Lifecycle Hooks Demo
+  Shows onMount, onDestroy, and onUpdate usage
+-->
+
+<script>
+  let count = $(0)
+  let logs = $([])
+  let mounted = $(false)
+  
+  // Called when component is added to DOM
+  onMount(() => {
+    logs([...logs(), 'Component mounted!'])
+    mounted(true)
+    console.log('Lifecycle Demo: mounted')
+  })
+  
+  // Called when component is removed
+  onDestroy(() => {
+    console.log('Lifecycle Demo: destroyed')
+  })
+  
+  // Called when any reactive value changes
+  onUpdate((changedVars) => {
+    if (changedVars && changedVars[0] === 'count') {
+      logs([...logs(), `Count updated to: ${count()}`])
+    }
+  })
+  
+  function increment() {
+    count(count() + 1)
+  }
+  
+  function decrement() {
+    count(count() - 1)
+  }
+  
+  function clearLogs() {
+    logs([])
+  }
+</script>
+
+<template>
+  <div class="lifecycle-demo">
+    <h1>Lifecycle Hooks Demo</h1>
+    
+    <div class="status">
+      <span class="indicator {{ mounted ? 'active' : '' }}"></span>
+      <span>{{ mounted ? 'Mounted' : 'Not Mounted' }}</span>
+    </div>
+    
+    <div class="counter">
+      <button onclick="decrement()">-</button>
+      <span class="count">{{ count }}</span>
+      <button onclick="increment()">+</button>
+    </div>
+    
+    <div class="logs">
+      <div class="logs-header">
+        <h2>Event Log</h2>
+        <button class="clear-btn" onclick="clearLogs()">Clear</button>
+      </div>
+      <ul>
+        <li @each="log in logs">{{ log }}</li>
+      </ul>
+    </div>
+  </div>
+</template>
+
+<style>
+  .lifecycle-demo {
+    max-width: 500px;
+    margin: 50px auto;
+    padding: 30px;
+    font-family: system-ui, sans-serif;
+    background: #1a1a2e;
+    border-radius: 16px;
+    color: #eee;
+  }
+  
+  h1 {
+    text-align: center;
+    color: #00d9ff;
+    margin-bottom: 30px;
+  }
+  
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  
+  .indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ff4444;
+    transition: background 0.3s;
+  }
+  
+  .indicator.active {
+    background: #44ff44;
+    box-shadow: 0 0 10px #44ff44;
+  }
+  
+  .counter {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+  
+  .counter button {
+    width: 50px;
+    height: 50px;
+    border: none;
+    border-radius: 50%;
+    background: #00d9ff;
+    color: #1a1a2e;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  
+  .counter button:hover {
+    transform: scale(1.1);
+  }
+  
+  .count {
+    font-size: 2.5rem;
+    font-weight: bold;
+    min-width: 80px;
+    text-align: center;
+  }
+  
+  .logs {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 15px;
+  }
+  
+  .logs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  
+  .logs h2 {
+    margin: 0;
+    font-size: 1rem;
+    color: #00d9ff;
+  }
+  
+  .clear-btn {
+    padding: 5px 15px;
+    border: 1px solid #00d9ff;
+    background: transparent;
+    color: #00d9ff;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .logs ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 150px;
+    overflow-y: auto;
+  }
+  
+  .logs li {
+    padding: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.9rem;
+    color: #aaa;
+  }
+  
+  .logs li:last-child {
+    border-bottom: none;
+  }
+</style>

@@ -1,0 +1,64 @@
+<script>
+	// Default state (will be overridden by loader)
+	let post = $({
+		title: "Loading...",
+		content: "",
+		date: ""
+	})
+</script>
+
+<template>
+	<div class="blog-post">
+		<a href="/blog" class="back-link">← Back to Blog</a>
+		<article>
+			<h1>{{ post.title }}</h1>
+			<p class="meta">Published on {{ post.date }}</p>
+			<div class="content">
+				{{ post.content }}
+			</div>
+		</article>
+	</div>
+</template>
+
+<style>
+	.blog-post {
+		max-width: 800px;
+		margin: 50px auto;
+		padding: 20px;
+		font-family: system-ui, sans-serif;
+	}
+
+	.back-link {
+		display: inline-block;
+		margin-bottom: 20px;
+		color: #007bff;
+		text-decoration: none;
+	}
+
+	.back-link:hover {
+		text-decoration: underline;
+	}
+
+	article {
+		background: white;
+		padding: 30px;
+		border-radius: 8px;
+		box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+	}
+
+	h1 {
+		margin-top: 0;
+		color: #333;
+	}
+
+	.meta {
+		color: #666;
+		font-size: 0.9rem;
+		margin-bottom: 20px;
+	}
+
+	.content {
+		line-height: 1.6;
+		color: #333;
+	}
+</style>

@@ -1,0 +1,103 @@
+<script>
+	let name: string = $("")
+	let email: string = $("")
+	let message: string = $("")
+
+	function submitForm() {
+		alert(`Thank you ${name}! We'll contact you at ${email}.`)
+		name = ""
+		email = ""
+		message = ""
+	}
+</script>
+
+<template>
+	<div class="page">
+		<h1>Contact</h1>
+		<form onsubmit="event.preventDefault(); submitForm();">
+			<div class="form-group">
+				<label>Name:</label>
+				<input type="text" value="{{ name }}" oninput="name = this.value" required />
+			</div>
+			<div class="form-group">
+				<label>Email:</label>
+				<input type="email" value="{{ email }}" oninput="email = this.value" required />
+			</div>
+			<div class="form-group">
+				<label>Message:</label>
+				<textarea value="{{ message }}" oninput="message = this.value" required></textarea>
+			</div>
+			<button type="submit">Send</button>
+		</form>
+		<nav>
+			<a href="/">Home</a>
+			<a href="/about">About</a>
+		</nav>
+	</div>
+</template>
+
+<style>
+	.page {
+		max-width: 800px;
+		margin: 50px auto;
+		padding: 20px;
+		font-family: system-ui, sans-serif;
+	}
+
+	.form-group {
+		margin-bottom: 15px;
+	}
+
+	label {
+		display: block;
+		margin-bottom: 5px;
+		font-weight: bold;
+	}
+
+	input, textarea {
+		width: 100%;
+		padding: 10px;
+		font-size: 1rem;
+		border: 2px solid #ddd;
+		border-radius: 5px;
+		box-sizing: border-box;
+	}
+
+	input:focus, textarea:focus {
+		outline: none;
+		border-color: #007bff;
+	}
+
+	textarea {
+		resize: vertical;
+		min-height: 100px;
+	}
+
+	button {
+		padding: 10px 20px;
+		font-size: 1rem;
+		border: none;
+		border-radius: 5px;
+		background: #007bff;
+		color: white;
+		cursor: pointer;
+	}
+
+	button:hover {
+		background: #0056b3;
+	}
+
+	nav {
+		margin-top: 20px;
+	}
+
+	nav a {
+		margin-right: 15px;
+		color: #007bff;
+		text-decoration: none;
+	}
+
+	nav a:hover {
+		text-decoration: underline;
+	}
+</style>

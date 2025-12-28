@@ -1,0 +1,62 @@
+<!-- 
+  Color Picker Child Component
+  Emits 'colorChange' event when user picks a color
+-->
+
+<script>
+  let currentColor = $('#667eea')
+  
+  const colors = [
+    '#667eea', '#764ba2', '#f093fb', '#f5576c',
+    '#4facfe', '#00f2fe', '#43e97b', '#38f9d7',
+    '#fa709a', '#fee140', '#ffecd2', '#fcb69f'
+  ]
+  
+  function selectColor(color) {
+    currentColor(color)
+    emit('colorChange', { color })
+  }
+</script>
+
+<template>
+  <div class="color-picker">
+    <div class="colors-grid">
+      <button 
+        @each="color in colors" 
+        class="color-btn {{ color === currentColor ? 'active' : '' }}"
+        style="background: {{ color }}"
+        onclick="selectColor('{{ color }}')"
+      ></button>
+    </div>
+  </div>
+</template>
+
+<style>
+  .color-picker {
+    padding: 10px;
+  }
+  
+  .colors-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  
+  .color-btn {
+    width: 100%;
+    aspect-ratio: 1;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .color-btn:hover {
+    transform: scale(1.1);
+  }
+  
+  .color-btn.active {
+    border-color: white;
+    box-shadow: 0 0 10px rgba(255,255,255,0.5);
+  }
+</style>

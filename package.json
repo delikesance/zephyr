@@ -1,0 +1,30 @@
+{
+  "name": "zephyr-js",
+  "version": "0.1.0",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "zephyr": "./bin/zephyr.ts"
+  },
+  "scripts": {
+    "dev": "bun run bin/zephyr.ts dev",
+    "build": "bun run bin/zephyr.ts build",
+    "test": "bun test",
+    "test:phase1": "bun test tests/phase1",
+    "test:watch": "bun test --watch",
+    "test:dx": "bun test tests/dx",
+    "test:performance": "bun test tests/performance",
+    "benchmark": "bun test tests/performance/benchmarks.test.ts",
+    "test:examples": "bun run test-examples.ts",
+    "test:examples:all": "bun run test-all-examples.ts",
+    "test:example": "bun run test-example-detailed.ts",
+    "compile": "bun run compile.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

@@ -1,0 +1,56 @@
+# Devenv
+.devenv*
+devenv.local.nix
+devenv.local.yaml
+
+# direnv
+.direnv
+
+# pre-commit
+.pre-commit-config.yaml
+
+# Dependencies
+node_modules/
+bun.lockb
+
+# Build outputs
+**/dist/
+*.html
+!examples/**/*.zph
+
+# Debug files
+debug*.txt
+debug*.ts
+*-debug.ts
+test-*-debug.ts
+repro*.ts
+
+# Local development files (keep local only)
+.agent/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+tests/temp/

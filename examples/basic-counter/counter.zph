@@ -1,0 +1,58 @@
+<script>
+	let count = $(0)
+</script>
+
+<template>
+	<div class="counter">
+		<h1>Counter Example</h1>
+		<p class="count-display">Count: {{ count }}</p>
+		
+		<div class="buttons">
+			<button onclick="count++">+1</button>
+			<button onclick="count--">-1</button>
+			<button onclick="count = 0">Reset</button>
+		</div>
+	</div>
+</template>
+
+<style>
+	.counter {
+		max-width: 400px;
+		margin: 50px auto;
+		padding: 20px;
+		text-align: center;
+		font-family: system-ui, sans-serif;
+	}
+
+	.count-display {
+		font-size: 2rem;
+		font-weight: bold;
+		margin: 20px 0;
+		color: #333;
+	}
+
+	.buttons {
+		display: flex;
+		gap: 10px;
+		justify-content: center;
+	}
+
+	button {
+		padding: 10px 20px;
+		font-size: 1rem;
+		border: none;
+		border-radius: 5px;
+		background: #007bff;
+		color: white;
+		cursor: pointer;
+		transition: background 0.2s;
+	}
+
+	button:hover {
+		background: #0056b3;
+	}
+
+	button:active {
+		transform: scale(0.95);
+	}
+</style>

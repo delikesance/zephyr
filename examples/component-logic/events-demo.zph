@@ -1,0 +1,163 @@
+<!-- 
+  Events Demo
+  Shows parent-child communication with emit() and @event
+-->
+
+<import ColorPicker from "./color-picker.zph" />
+
+<script>
+  let selectedColor = $('#667eea')
+  let history = $([])
+  
+  function handleColorChange(data) {
+    selectedColor(data.color)
+    history([...history(), { color: data.color, time: new Date().toLocaleTimeString() }])
+  }
+  
+  function clearHistory() {
+    history([])
+  }
+</script>
+
+<template>
+  <div class="events-demo">
+    <h1>Event System Demo</h1>
+    <p class="subtitle">Parent-Child Communication</p>
+    
+    <div class="main-content">
+      <div class="picker-section">
+        <h2>Color Picker Component</h2>
+        <ColorPicker @colorChange="handleColorChange" initialColor="{{ selectedColor }}" />
+      </div>
+      
+      <div class="preview-section">
+        <h2>Selected Color</h2>
+        <div class="color-preview" style="background: {{ selectedColor }}">
+          {{ selectedColor }}
+        </div>
+      </div>
+    </div>
+    
+    <div class="history-section">
+      <div class="history-header">
+        <h2>Event History</h2>
+        <button onclick="clearHistory()">Clear</button>
+      </div>
+      <div class="history-list">
+        <div @each="item in history" class="history-item">
+          <div class="color-dot" style="background: {{ item.color }}"></div>
+          <span>{{ item.color }}</span>
+          <span class="time">{{ item.time }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style>
+  .events-demo {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 30px;
+    font-family: system-ui, sans-serif;
+    background: linear-gradient(180deg, #0f0f23 0%, #1a1a3e 100%);
+    border-radius: 16px;
+    color: #e8e8e8;
+  }
+  
+  h1 {
+    text-align: center;
+    margin-bottom: 5px;
+    color: #fff;
+  }
+  
+  .subtitle {
+    text-align: center;
+    color: #888;
+    margin-bottom: 30px;
+  }
+  
+  h2 {
+    font-size: 0.9rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+  }
+  
+  .main-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .picker-section, .preview-section {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  
+  .color-preview {
+    height: 120px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    transition: background 0.3s;
+  }
+  
+  .history-section {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  
+  .history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  
+  .history-header h2 {
+    margin: 0;
+  }
+  
+  .history-header button {
+    padding: 5px 15px;
+    background: transparent;
+    border: 1px solid #444;
+    color: #888;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .history-list {
+    max-height: 150px;
+    overflow-y: auto;
+  }
+  
+  .history-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  
+  .color-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+  }
+  
+  .time {
+    margin-left: auto;
+    color: #666;
+    font-size: 0.85rem;
+  }
+</style>
